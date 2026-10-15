@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Smart Classroom - Energy Saving Simulator</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    .slider-toggle {
+      position: relative;
+      width: 48px;
+      height: 26px;
+      background-color: #334155;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .slider-toggle.active {
+      background-color: #10b981;
+    }
+    .slider-circle {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      background-color: #ffffff;
+      border-radius: 9999px;
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .slider-toggle.active .slider-circle {
+      transform: translateX(22px);
+    }
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.1); }
+    }
+    .pulse-dot {
+      animation: pulse-subtle 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-transparent text-[var(--foreground)] antialiased p-4">
+  <div class="max-w-6xl mx-auto space-y-5">
+    
+    <!-- Top Header -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-[var(--foreground)] leading-tight">Energy Saving Simulator</h1>
+          <p class="text-xs text-[var(--muted-foreground)]">IoT Telemetry & Classroom Automation Gateway</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div id="connectionBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
+          <span id="connectionText">Backend Connected (8000)</span>
+        </div>
+        <button id="refreshBtn" class="p-2 rounded-lg bg-[var(--background)] hover:bg-[var(--border)] border border-[var(--border)] text-[var(--muted-foreground)] transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 4 KPI Header Metrics -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Power Load -->
+      <div class="bg-[var(--card)] border border-[var(--border)] border-l-4 border-l-amber-500 rounded-xl p-4 shadow-sm">
+        <div class="flex justify-between items-start">
+          <span class="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)]">Total Power Load</span>
+          <div class="p-2 rounded-lg bg-amber-500/10 text-amber-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+        </div>
+        <div class="mt-2 flex items-baseline gap-1.5">
+          <span id="kpiPower" class="text-2xl font-extrabold text-[var(--foreground)]">4.32</span>
+          <span class="text-sm font-semibold text-[var(--muted-foreground)]">kW</span>
+        </div>
+        <div class="mt-3 pt-2 border-t border-[var(--border)] flex justify-between text-xs">
+          <span class="text-[var(--muted-foreground)]">Real-time draw</span>
+          <span class="text-emerald-400 font-medium">-18.4% eco</span>
+        </div>
+      </div>
+
+      <!-- Energy Saved -->
+      <div class="bg-[var(--card)] border border-[var(--border)] border-l-4 border-l-emerald-500 rounded-xl p-4 shadow-sm">
+        <div class="flex justify-between items-start">
+          <span class="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)]">Energy Saved</span>
+          <div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          </div>
+        </div>
+        <div class="mt-2 flex items-baseline gap-1.5">
+          <span id="kpiSaved" class="text-2xl font-extrabold text-[var(--foreground)]">43.5</span>
+          <span class="text-sm font-semibold text-[var(--muted-foreground)]">kWh</span>
+        </div>
+        <div class="mt-3 pt-2 border-t border-[var(--border)] flex justify-between text-xs">
+          <span class="text-[var(--muted-foreground)]">Today's reduction</span>
+          <span class="text-emerald-400 font-medium">+3.2 kWh/h</span>
+        </div>
+      </div>
+
+      <!-- Occupancy -->
+      <div class="bg-[var(--card)] border border-[var(--border)] border-l-4 border-l-indigo-500 rounded-xl p-4 shadow-sm">
+        <div class="flex justify-between items-start">
+          <span class="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)]">Occupied Rooms</span>
+          <div class="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+        </div>
+        <div class="mt-2 flex items-baseline gap-1.5">
+          <span id="kpiOccupiedRooms" class="text-2xl font-extrabold text-[var(--foreground)]">2 / 4</span>
+          <span class="text-sm font-semibold text-[var(--muted-foreground)]">Rooms</span>
+        </div>
+        <div class="mt-3 pt-2 border-t border-[var(--border)] flex justify-between text-xs">
+          <span id="kpiOccupantsText" class="text-[var(--muted-foreground)]">45 students</span>
+          <span class="text-indigo-400 font-medium">50% usage</span>
+        </div>
+      </div>
+
+      <!-- Efficiency Index -->
+      <div class="bg-[var(--card)] border border-[var(--border)] border-l-4 border-l-cyan-500 rounded-xl p-4 shadow-sm">
+        <div class="flex justify-between items-start">
+          <span class="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)]">Efficiency Index</span>
+          <div class="p-2 rounded-lg bg-cyan-500/10 text-cyan-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          </div>
+        </div>
+        <div class="mt-2 flex items-baseline gap-1.5">
+          <span id="kpiEfficiency" class="text-2xl font-extrabold text-[var(--foreground)]">92.0</span>
+          <span class="text-sm font-semibold text-[var(--muted-foreground)]">%</span>
+        </div>
+        <div class="mt-3 pt-2 border-t border-[var(--border)] flex justify-between text-xs">
+          <span class="text-[var(--muted-foreground)]">Audit rating</span>
+          <span id="kpiGrade" class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold">Grade A</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Main Section: Grid & Controls -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      
+      <!-- Classroom View Grid (7 cols) -->
+      <div class="lg:col-span-7 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-base font-bold text-[var(--foreground)] flex items-center gap-2">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            Monitored Classrooms
+          </h2>
+          <span class="text-xs text-[var(--muted-foreground)]">Select room to adjust controls</span>
+        </div>
+
+        <div id="classroomGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <!-- Classrooms injected dynamically -->
+        </div>
+      </div>
+
+      <!-- Control Panel (5 cols) -->
+      <div class="lg:col-span-5 bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 shadow-sm space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+          <div class="flex items-center gap-2">
+            <div class="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-[var(--foreground)]">Room Controls</h3>
+              <p id="controlRoomName" class="text-xs text-[var(--muted-foreground)]">Configuring Room-101 (Live Sync)</p>
+            </div>
+          </div>
+          <span id="syncIndicator" class="text-xs font-semibold text-emerald-400 flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Synced
+          </span>
+        </div>
+
+        <!-- Toggles: Lighting & HVAC -->
+        <div class="space-y-3">
+          
+          <!-- Smart Lighting -->
+          <div class="bg-[var(--background)] border border-[var(--border)] rounded-xl p-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div id="lightIconBox" class="p-2 rounded-lg bg-amber-500/20 text-amber-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              </div>
+              <div>
+                <div class="text-sm font-semibold text-[var(--foreground)]">Smart Lighting</div>
+                <div id="lightStatusText" class="text-xs text-[var(--muted-foreground)]">Active (0.35 kW)</div>
+              </div>
+            </div>
+            <div id="lightToggle" class="slider-toggle active" onclick="toggleLight()">
+              <div class="slider-circle"></div>
+            </div>
+          </div>
+
+          <!-- HVAC -->
+          <div class="bg-[var(--background)] border border-[var(--border)] rounded-xl p-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div id="acIconBox" class="p-2 rounded-lg bg-cyan-500/20 text-cyan-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21a9 9 0 110-18 9 9 0 010 18z"/></svg>
+              </div>
+              <div>
+                <div class="text-sm font-semibold text-[var(--foreground)]">HVAC System</div>
+                <div id="acStatusText" class="text-xs text-[var(--muted-foreground)]">Cooling (1.80 kW)</div>
+              </div>
+            </div>
+            <div id="acToggle" class="slider-toggle active" onclick="toggleAC()">
+              <div class="slider-circle"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Sliders: Temperature & Occupancy -->
+        <div class="space-y-4 pt-1">
+          
+          <!-- Temp Slider -->
+          <div class="bg-[var(--background)] border border-[var(--border)] rounded-xl p-3.5 space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-semibold text-[var(--foreground)] flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                Temperature Setpoint
+              </span>
+              <span id="tempValueDisplay" class="font-bold text-cyan-400 text-sm">22.5°C</span>
+            </div>
+            <input type="range" id="tempSlider" min="16" max="30" step="0.5" value="22.5" class="w-full accent-cyan-500 cursor-pointer" oninput="onTempChange(this.value)">
+            <div class="flex justify-between text-[11px] text-[var(--muted-foreground)]">
+              <span>16°C (Max Cool)</span>
+              <span class="text-emerald-400">24°C (Eco)</span>
+              <span>30°C</span>
+            </div>
+          </div>
+
+          <!-- Occupancy Slider -->
+          <div class="bg-[var(--background)] border border-[var(--border)] rounded-xl p-3.5 space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-semibold text-[var(--foreground)] flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                Room Occupancy
+              </span>
+              <span id="occValueDisplay" class="font-bold text-emerald-400 text-sm">15 Students</span>
+            </div>
+            <input type="range" id="occSlider" min="0" max="40" step="1" value="15" class="w-full accent-emerald-500 cursor-pointer" oninput="onOccChange(this.value)">
+            <div class="flex justify-between text-[11px] text-[var(--muted-foreground)]">
+              <span>0 (Vacant)</span>
+              <span>20 (Half)</span>
+              <span>40 (Full)</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Presets -->
+        <div class="pt-2 border-t border-[var(--border)]">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-[var(--muted-foreground)] mb-2">Scenarios & Energy Presets</div>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="applyScenario('eco')" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition">
+              🌱 Eco Vacant
+            </button>
+            <button onclick="applyScenario('lecture')" class="px-2.5 py-1.5 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-semibold transition">
+              🎓 Lecture
+            </button>
+            <button onclick="applyScenario('reset')" class="px-2.5 py-1.5 rounded-lg bg-[var(--background)] hover:bg-[var(--border)] border border-[var(--border)] text-[var(--muted-foreground)] text-xs font-semibold transition">
+              🔄 Default
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    const API_URL = 'http://127.0.0.1:8000/api';
+    
+    // Classroom state collection
+    let classrooms = [
+      { id: 'Room-101', name: 'Smart Classroom 101', occupancy: 15, capacity: 40, lights: true, ac_status: true, temperature: 22.5, isPrimary: true },
+      { id: 'Room-102', name: 'Science Lab 102', occupancy: 0, capacity: 35, lights: false, ac_status: false, temperature: 24.0, isPrimary: false },
+      { id: 'Room-103', name: 'Seminar Hall 103', occupancy: 30, capacity: 30, lights: true, ac_status: true, temperature: 21.0, isPrimary: false },
+      { id: 'Room-104', name: 'Auditorium 104', occupancy: 0, capacity: 60, lights: true, ac_status: true, temperature: 20.5, isPrimary: false }
+    ];
+
+    let selectedId = 'Room-101';
+    let energySavedKwh = 43.8;
+
+    async function fetchBackend() {
+      try {
+        const res = await fetch(`${API_URL}/classroom`);
+        if (res.ok) {
+          const data = await res.json();
+          const live = data.classroom || data;
+          const idx = classrooms.findIndex(c => c.id === 'Room-101');
+          if (idx !== -1) {
+            classrooms[idx].occupancy = live.occupancy ?? classrooms[idx].occupancy;
+            classrooms[idx].lights = live.lights ?? classrooms[idx].lights;
+            classrooms[idx].ac_status = live.ac_status ?? classrooms[idx].ac_status;
+            classrooms[idx].temperature = live.temperature ?? classrooms[idx].temperature;
+          }
+          document.getElementById('connectionBadge').className = 'flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+          document.getElementById('connectionText').innerText = 'Backend Connected (8000)';
+        }
+      } catch (e) {
+        document.getElementById('connectionBadge').className = 'flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20';
+        document.getElementById('connectionText').innerText = 'Local Simulator Mode';
+      }
+      render();
+    }
+
+    async function sendUpdateToBackend(patch) {
+      const indicator = document.getElementById('syncIndicator');
+      indicator.innerHTML = '<span class="text-cyan-400">Syncing...</span>';
+      try {
+        await fetch(`${API_URL}/classroom/update`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(patch)
+        });
+        indicator.innerHTML = '<span class="text-emerald-400 flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Synced</span>';
+      } catch (err) {
+        indicator.innerHTML = '<span class="text-amber-400">Simulated Locally</span>';
+      }
+    }
+
+    function render() {
+      // 1. Calculate KPIs
+      let totalPower = 0;
+      let totalOccupancy = 0;
+      let occupiedCount = 0;
+      let wasteCount = 0;
+
+      classrooms.forEach(c => {
+        const lKw = c.lights ? 0.35 : 0.02;
+        const acKw = c.ac_status ? (c.temperature < 21 ? 2.4 : 1.6) : 0.05;
+        const occKw = c.occupancy * 0.015;
+        totalPower += lKw + acKw + occKw;
+        totalOccupancy += c.occupancy;
+        if (c.occupancy > 0) occupiedCount++;
+        if (c.occupancy === 0 && (c.lights || c.ac_status)) wasteCount++;
+      });
+
+      const efficiency = Math.max(40, Math.min(99, Math.round(98 - (wasteCount * 14)))).toFixed(1);
+
+      document.getElementById('kpiPower').innerText = totalPower.toFixed(2);
+      document.getElementById('kpiSaved').innerText = energySavedKwh.toFixed(1);
+      document.getElementById('kpiOccupiedRooms').innerText = `${occupiedCount} / ${classrooms.length}`;
+      document.getElementById('kpiOccupantsText').innerText = `${totalOccupancy} students total`;
+      document.getElementById('kpiEfficiency').innerText = efficiency;
+      document.getElementById('kpiGrade').innerText = efficiency > 85 ? 'Grade A' : 'Warning';
+      document.getElementById('kpiGrade').className = efficiency > 85 
+        ? 'px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold'
+        : 'px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-bold';
+
+      // 2. Render Classroom Grid
+      const grid = document.getElementById('classroomGrid');
+      grid.innerHTML = classrooms.map(c => {
+        const isSelected = c.id === selectedId;
+        const isWaste = c.occupancy === 0 && (c.lights || c.ac_status);
+        const percent = Math.min(100, Math.round((c.occupancy / c.capacity) * 100));
+        const roomKw = ((c.lights ? 0.35 : 0.02) + (c.ac_status ? (c.temperature < 21 ? 2.4 : 1.6) : 0.05) + (c.occupancy * 0.015)).toFixed(2);
+
+        return `
+          <div onclick="selectRoom('${c.id}')" class="p-4 rounded-xl cursor-pointer transition border ${isSelected ? 'border-emerald-500 bg-[var(--background)] shadow-lg shadow-emerald-500/10' : 'border-[var(--border)] bg-[var(--card)] hover:border-slate-500'}">
+            <div class="flex justify-between items-start mb-2.5">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full ${c.occupancy > 0 ? 'bg-emerald-400' : 'bg-slate-500'}"></span>
+                  <span class="font-bold text-sm text-[var(--foreground)]">${c.name}</span>
+                </div>
+                <div class="text-[11px] text-[var(--muted-foreground)]">${c.id} ${c.isPrimary ? '• LIVE SYNC' : ''}</div>
+              </div>
+              <span class="text-[11px] px-2 py-0.5 rounded-full font-semibold ${isWaste ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}">
+                ${isWaste ? '⚠️ Energy Waste' : '✓ Optimal'}
+              </span>
+            </div>
+
+            <!-- Temp & Draw -->
+            <div class="bg-[var(--background)] rounded-lg p-2.5 mb-2.5 flex justify-between items-center text-xs border border-[var(--border)]">
+              <div>
+                <span class="text-[var(--muted-foreground)]">Temp: </span>
+                <span class="font-bold ${c.temperature > 24 ? 'text-amber-400' : 'text-cyan-400'}">${c.temperature.toFixed(1)}°C</span>
+              </div>
+              <div>
+                <span class="text-[var(--muted-foreground)]">Draw: </span>
+                <span class="font-bold text-amber-400">${roomKw} kW</span>
+              </div>
+            </div>
+
+            <!-- Occupancy bar -->
+            <div class="space-y-1 mb-2.5">
+              <div class="flex justify-between text-[11px] text-[var(--muted-foreground)]">
+                <span>Occupancy: ${c.occupancy} / ${c.capacity}</span>
+                <span>${percent}%</span>
+              </div>
+              <div class="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                <div class="h-full ${percent > 80 ? 'bg-rose-500' : percent > 40 ? 'bg-amber-500' : 'bg-emerald-500'} transition-all" style="width: ${percent}%"></div>
+              </div>
+            </div>
+
+            <!-- Device pills -->
+            <div class="grid grid-cols-2 gap-2 text-[11px]">
+              <div class="p-1.5 rounded bg-[var(--background)] flex items-center justify-between border border-[var(--border)]">
+                <span class="text-[var(--muted-foreground)]">Lights</span>
+                <span class="font-bold ${c.lights ? 'text-amber-400' : 'text-slate-500'}">${c.lights ? 'ON' : 'OFF'}</span>
+              </div>
+              <div class="p-1.5 rounded bg-[var(--background)] flex items-center justify-between border border-[var(--border)]">
+                <span class="text-[var(--muted-foreground)]">HVAC</span>
+                <span class="font-bold ${c.ac_status ? 'text-cyan-400' : 'text-slate-500'}">${c.ac_status ? 'COOLING' : 'OFF'}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // 3. Update Control Panel state
+      const curr = classrooms.find(c => c.id === selectedId) || classrooms[0];
+      document.getElementById('controlRoomName').innerText = `Configuring ${curr.name} (${curr.id})`;
+      
+      const lToggle = document.getElementById('lightToggle');
+      if (curr.lights) {
+        lToggle.classList.add('active');
+        document.getElementById('lightStatusText').innerText = 'Active (0.35 kW)';
+      } else {
+        lToggle.classList.remove('active');
+        document.getElementById('lightStatusText').innerText = 'Standby (0.02 kW)';
+      }
+
+      const acToggle = document.getElementById('acToggle');
+      if (curr.ac_status) {
+        acToggle.classList.add('active');
+        document.getElementById('acStatusText').innerText = 'Cooling (1.80 kW)';
+      } else {
+        acToggle.classList.remove('active');
+        document.getElementById('acStatusText').innerText = 'Idle (0.05 kW)';
+      }
+
+      document.getElementById('tempSlider').value = curr.temperature;
+      document.getElementById('tempValueDisplay').innerText = `${curr.temperature.toFixed(1)}°C`;
+      document.getElementById('occSlider').value = curr.occupancy;
+      document.getElementById('occValueDisplay').innerText = `${curr.occupancy} Students`;
+    }
+
+    function selectRoom(id) {
+      selectedId = id;
+      render();
+    }
+
+    function toggleLight() {
+      const curr = classrooms.find(c => c.id === selectedId);
+      if (!curr) return;
+      curr.lights = !curr.lights;
+      if (!curr.lights) energySavedKwh += 0.35;
+      if (curr.id === 'Room-101') sendUpdateToBackend({ lights: curr.lights });
+      render();
+    }
+
+    function toggleAC() {
+      const curr = classrooms.find(c => c.id === selectedId);
+      if (!curr) return;
+      curr.ac_status = !curr.ac_status;
+      if (!curr.ac_status) energySavedKwh += 1.4;
+      if (curr.id === 'Room-101') sendUpdateToBackend({ ac_status: curr.ac_status });
+      render();
+    }
+
+    function onTempChange(val) {
+      const curr = classrooms.find(c => c.id === selectedId);
+      if (!curr) return;
+      curr.temperature = parseFloat(val);
+      if (curr.id === 'Room-101') sendUpdateToBackend({ temperature: curr.temperature });
+      render();
+    }
+
+    function onOccChange(val) {
+      const curr = classrooms.find(c => c.id === selectedId);
+      if (!curr) return;
+      curr.occupancy = parseInt(val, 10);
+      if (curr.id === 'Room-101') sendUpdateToBackend({ occupancy: curr.occupancy });
+      render();
+    }
+
+    function applyScenario(type) {
+      const curr = classrooms.find(c => c.id === selectedId);
+      if (!curr) return;
+      if (type === 'eco') {
+        curr.lights = false;
+        curr.ac_status = false;
+        curr.temperature = 24.5;
+        curr.occupancy = 0;
+        energySavedKwh += 2.1;
+      } else if (type === 'lecture') {
+        curr.lights = true;
+        curr.ac_status = true;
+        curr.temperature = 21.5;
+        curr.occupancy = 28;
+      } else if (type === 'reset') {
+        curr.lights = true;
+        curr.ac_status = true;
+        curr.temperature = 22.5;
+        curr.occupancy = 15;
+      }
+      if (curr.id === 'Room-101') {
+        sendUpdateToBackend({
+          lights: curr.lights,
+          ac_status: curr.ac_status,
+          temperature: curr.temperature,
+          occupancy: curr.occupancy
+        });
+      }
+      render();
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', fetchBackend);
+    setInterval(fetchBackend, 3000);
+    fetchBackend();
+  </script>
+</body>
+</html>
